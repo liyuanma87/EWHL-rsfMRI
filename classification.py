@@ -26,15 +26,13 @@ def _find_input_file(filename, legacy_path=None):
             return path
     raise FileNotFoundError(
         f"找不到输入文件: {filename}\n"
-        + "已检查以下位置:\n  - "
-        + "\n  - ".join(candidates)
-        + "\n请将该文件放到本 Python 脚本同一文件夹，或修改代码中的路径。"
+        
     )
 
-# 1. 读取Excel文件，提取特征（第3列到第145列，共143个特征）
+
 excel_path = _find_input_file(
     '884_subjects_143features.xlsx',
-    legacy_path='/Users/maliyuan/Desktop/Code/884_subjects_143features.xlsx'
+    legacy_path=None
 )
 
 df_full = pd.read_excel(excel_path)
@@ -48,7 +46,7 @@ column_means = np.mean(feature_matrix, axis=0)
 #
 combat_path = _find_input_file(
     'matlab_combat_143.txt',
-    legacy_path='/Users/maliyuan/Desktop/Code/matlab_combat_143.txt'
+    legacy_path=None
 )
 txt=np.loadtxt(combat_path)
 
@@ -70,7 +68,7 @@ combat_feature_matrix=np.loadtxt(combat_out)
 dataset = pd.DataFrame(combat_feature_matrix)
 metadata_path = _find_input_file(
     '884data.xlsx',
-    legacy_path='/Users/maliyuan/Desktop/Code/884data.xlsx'
+    legacy_path=None
 )
 data=pd.read_excel(metadata_path)
 Y1= data['AGE']
@@ -127,7 +125,7 @@ import pandas as pd
 import random
 from sklearn.model_selection import KFold
 
-# ======================== 20次重复10折交叉验证 ========================
+
 from sklearn.model_selection import KFold
 from sklearn.metrics import confusion_matrix, f1_score as sklearn_f1_score
 from sklearn.ensemble import GradientBoostingClassifier
