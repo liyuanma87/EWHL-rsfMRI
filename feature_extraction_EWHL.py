@@ -182,16 +182,16 @@ def extract_edh_features_single_subject(fc_matrix, file_id, lap_dir, thresholds)
             L0, L1, sL0, sL1, cr = compute_edh_laplacians_and_energies(sc)
             b0, f0, m0, s0, su0, sq0, r0, c0 = extract_enhanced_spectral_features(sL0)
             b1, f1, m1, s1, su1, sq1, r1, c1 = extract_enhanced_spectral_features(sL1)
-            all_feats.extend([b0,f0,m0,s0,su0,sq0,r0,c0, b1,f1,m1,s1,su1,sq1,r1,c1,cr])
+            all_feats.extend([b0,f0,sq0,r0,c0, b1,f1,sq1,r1,c1,cr])
 #            curls.append(cr)
         except:
-            all_feats.extend([0]*17)
+            all_feats.extend([0]*11)
 #            curls.append(0.0)
 
     try:
         final = np.array(all_feats)
     except:
-        final = np.zeros(len(thresholds)*17)
+        final = np.zeros(len(thresholds)*11)
     return final, saved, log
 
 
@@ -222,8 +222,8 @@ def generate_enhanced_feature_names(thresholds):
     names = []
     for t in thresholds:
         ts = f"{t:.2f}".rstrip("0").rstrip(".")
-        names += [f"t{ts}_beta0",f"t{ts}_F0",f"t{ts}_nz_mean0",f"t{ts}_nz_std0",f"t{ts}_nz_sum0",f"t{ts}_nz_sq_sum0",f"t{ts}_nz_range0",f"t{ts}_nz_count0"]
-        names += [f"t{ts}_beta1",f"t{ts}_F1",f"t{ts}_nz_mean1",f"t{ts}_nz_std1",f"t{ts}_nz_sum1",f"t{ts}_nz_sq_sum1",f"t{ts}_nz_range1",f"t{ts}_nz_count1"]
+        names += [f"t{ts}_beta0",f"t{ts}_F0",f"t{ts}_nz_sq_sum0",f"t{ts}_nz_range0",f"t{ts}_nz_count0"]
+        names += [f"t{ts}_beta1",f"t{ts}_F1",f"t{ts}_nz_sq_sum1",f"t{ts}_nz_range1",f"t{ts}_nz_count1"]
         names += [f"t{ts}_curl_ratio"]
     # for p in ["mean","std"]:
     #     for d in ["0","1"]:
@@ -233,19 +233,18 @@ def generate_enhanced_feature_names(thresholds):
 
 
 def main():
-    BASE_DIR = "/Users/maliyuan/Desktop/测试0414"
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     LABEL_FILE = os.path.join(BASE_DIR, "884data.xlsx")
     MATRIX_DIR = os.path.join(BASE_DIR, "rois_aal_coor_matrix")
-    OUTPUT_DIR = os.path.join(BASE_DIR, "edh_features_final_306")
-    LAP_DIR = os.path.join(OUTPUT_DIR, "laplacians")
+    OUTPUT_DIR = BASE_DIR
+    LAP_DIR = os.path.join(BASE_DIR, "laplacians")
 
     THRESHOLDS = np.arange(0.3, 0.91, 0.05)
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
     os.makedirs(LAP_DIR, exist_ok=True)
 
     f_names = generate_enhanced_feature_names(THRESHOLDS)
-    out_csv = os.path.join(OUTPUT_DIR, "test_10_subjects.csv")
-    header = ["Subject_ID", "Label"] + f_names + ["Log"]
+    out_xlsx = os.path.join(OUTPUT_DIR, "884_subjects_143features.xlsx")
+    header = ["Subject_ID", "Label"] + f_names
 
     df = pd.read_excel(LABEL_FILE)
     ids = df["FILE_ID"].astype(str).tolist()
@@ -255,7 +254,7 @@ def main():
     labels = labels[:884]
    
 
-    pd.DataFrame(columns=header).to_csv(out_csv, index=False, encoding='utf-8-sig')
+    rows = []
 
     success = 0
     total = len(ids)
@@ -266,16 +265,18 @@ def main():
         try:
             fc = load_fc_matrix(sid, MATRIX_DIR)
             feat, saved, log = extract_edh_features_single_subject(fc, sid, LAP_DIR, THRESHOLDS)
-            row = [sid, lab] + feat.tolist() + [log]
-            pd.DataFrame([row], columns=header).to_csv(out_csv, mode='a', header=False, index=False, encoding='utf-8-sig')
+            row = [sid, lab] + feat.tolist()
+            rows.append(row)
             success += 1
             print(f"✅ 成功 | {log}")
         except Exception as e:
             print(f"❌ 失败 | {str(e)[:60]}")
 
+    pd.DataFrame(rows, columns=header).to_excel(out_xlsx, index=False)
+
     print("\n" + "="*50)
     print(f"测试完成！成功：{success}/{total}")
-    print(f"输出CSV：{out_csv}")
+    print(f"输出Excel：{out_xlsx}")
     print("="*50)
 
 if __name__ == "__main__":
